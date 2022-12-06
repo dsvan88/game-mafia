@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="stylesheet" href="./public/css/style.css" />
+		<script defer src="./public/js/action-handler.js"></script>
+		<script defer src="./public/js/common-funcs.js"></script>
+		<script defer src="./public/js/common.js"></script>
+		<script defer src="./public/js/mafia/player.class.js"></script>
+		<script defer src="./public/js/mafia/game-engine.class.js"></script>
+		<script defer src="./public/js/mafia/mafia-engine.class.js"></script>
+		<script defer src="./public/js/mafia/timer.class.js"></script>
+		<script defer src="./public/js/mafia/game.js"></script>
+		<title>Document</title>
+	</head>
+	<body>
+		<div class="game">
+			<table class="game__table">
+				<thead>
+					<tr>
+						<th>№ З/п</th>
+						<th>Гравець</th>
+						<th>Вист.</th>
+						<th colspan="4">Фоли</th>
+						<th>Прим.</th>
+					</tr>
+					<tr>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th>1</th>
+						<th>2</th>
+						<th>3</th>
+						<th>4</th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody class="game__table-body"></tbody>
+			</table>
+			<div class="courtroom"></div>
+			<div class="timer">
+				<div class="timer__caption">
+					<span class="stopwatch">01:00:00</span>
+				</div>
+				<div class="timer__dashboard">
+					<span class="timer__dashboard-item fa fa-fast-backward" title="Сброс" data-timer="undo"></span>
+					<span class="timer__dashboard-item fa fa-play" title="Старт" data-timer="start"></span>
+					<span class="timer__dashboard-item fa fa-pause" title="Пауза" data-timer="pause"></span>
+					<span class="timer__dashboard-item fa fa-undo disabled" title="Відміна" data-timer="reset"></span>
+					<span class="timer__dashboard-item fa fa-fast-forward" title="Наступний" data-timer="next"></span>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

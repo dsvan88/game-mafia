@@ -1,0 +1,57 @@
+@import "font-awesome";
+
+.game{
+    &__table{
+        border: 1px solid #000000;
+        border-collapse: collapse;
+        td, th{
+            border: 1px solid #000000;
+            padding: 0.2em;            
+            .voted{
+                background-color: rgb(90, 230, 248);
+            }        
+            .puted{
+                background-color: rgb(72, 75, 255);
+            }
+            &.fail{
+                &[data-foul="1"]{
+                    background-color: #00ff22;
+                }
+                &[data-foul="2"]{
+                    background-color: #fbff0d;
+                }
+                &[data-foul="3"]{
+                    background-color: #ff0202;
+                }
+                &[data-foul="4"]{
+                    background-color: #000000;
+                }
+            }
+        }
+        tr{
+            &.shooted{
+                background-color: rgb(240, 127, 255);
+            }
+            &.out{
+                background-color: rgb(240, 127, 255);
+                text-decoration: line-through;
+            }
+            &.speaker{
+                background-color: aquamarine;
+            }
+        }
+    }
+}
+
+.timer{
+    &__dashboard{
+        display: flex;
+        &-item{
+            font-size: 3rem;
+            flex-grow: 1;
+            text-align: center;
+            border: 1px solid black;
+            border-radius: 4px;
+        }
+    }
+}
