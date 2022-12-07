@@ -13,22 +13,9 @@ class Player {
 
     puted = {};
 
-    row = null;
-    putedCell = null
-    primCell = null;
-
-    savedProps = [
-        'id',
-        'num',
-        'name',
-        'fouls',
-        'prim',
-        'dops',
-        'muted',
-        'out',
-        'bestMove',
-        'puted',
-    ];
+    #row = null;
+    #putedCell = null
+    #primCell = null;
 
     constructor(playerData = null) {
         if (playerData) {
@@ -38,8 +25,20 @@ class Player {
         }
     }
 
+    get row() {
+        return this.#row;
+    }
+
+    get putedCell() {
+        return this.#putedCell;
+    }
+
+    get primCell() {
+        return this.#primCell;
+    }
+
     getRow(index) {
-        this.row = document.createElement('tr');
+        this.#row = document.createElement('tr');
         this.row.dataset.playerId = index;
 
         this.num = index + 1;
@@ -53,19 +52,17 @@ class Player {
         nick.dataset.actionDblclick = 'game-put-him';
         this.row.append(nick);
 
-        let puted = document.createElement('td');
-        this.row.append(puted);
-        this.putedCell = puted;
+        this.#putedCell = document.createElement('td');
+        this.row.append(this.putedCell);
 
         for (let foul = 1; foul < 5; foul++){
             let cell = document.createElement('td');
-            // cell.className = 'fail';
             cell.dataset.actionDblclick = 'game-fouls';
             cell.dataset.foul = foul;
             this.row.append(cell);
         }
         
-        this.primCell = document.createElement('td');
+        this.#primCell = document.createElement('td');
         this.primCell.innerText = this.prim + index;
         this.row.append(this.primCell);
         
@@ -100,15 +97,8 @@ class Player {
     unmute() {
         this.muted = false;
     }
-    getState() {
-        let state = {};
-        for (let property of this.savedProps) {
-            state[property] = this[property];
-        }
-        return state;
-    }
-    loadState(state) {
-        for (let property of this.state[this.id]) {
+    load(state) {
+        for (let property of this.state) {
             this[property] = state[property];
         }
         return this;

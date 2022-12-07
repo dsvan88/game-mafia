@@ -10,7 +10,7 @@ class GameTimer {
     stopwatch = null;
 
 	buttons = {};
-	audioContext = new AudioContext();
+	audioContext = null;
 
     constructor({ maxTime = 2000, timerBlock = ".timer", gameEngine = null} ={})
 	{
@@ -38,13 +38,14 @@ class GameTimer {
 		this._left = value;
 		this.stopwatch.innerText = this.inttotime(value);
 	}
-	/**
-	 * @param {number} value
-	 */
-	get left(){
+
+	get left() {
 		return this._left;
 	}
 	start() {
+		if (!this.audioContext) {
+			this.audioContext = new AudioContext();
+		}
 		this.MainTimer = setInterval(() => this.countdown(), this.timerStep);
 	}
 	pause() {

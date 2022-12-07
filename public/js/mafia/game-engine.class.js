@@ -1,6 +1,6 @@
 class GameEngine {
 
-    gameTable = null;
+    #gameTable = null;
 
     players = [];
     maxPlayers = 10;
@@ -8,11 +8,14 @@ class GameEngine {
     prevStates = [];
     maxStatesSave = 10;
 
+    get gameTable(){
+        return this.#gameTable;
+    }
     constructor({ gameTable = null}) {
         if (typeof gameTable === "string") {
             gameTable = document.querySelector(gameTable);
         }
-        this.gameTable = gameTable;
+        this.#gameTable = gameTable;
       
         this.init();
     }
@@ -25,57 +28,34 @@ class GameEngine {
     }
     save() {
         let state = {};
-        for (let property of this.savedProps) {
-            if (property === 'players') {
-                state[property] = this.savePlayersStates();
-                continue;
-            }
-            if (this[property] instanceof Array) {
-                state[property] = this.arrayDataCheck(property);
-            }
+        for (let property in this) {
+            if (['prevStates', 'timer'].includes(property)) continue;
             state[property] = this[property];
         }
-        this.prevStates.push(state);
+        this.prevStates.push(JSON.stringify(state));
 
         if (this.prevStates.length > this.maxStatesSave)
             this.prevStates.shift();
         
-        return this.prevStates;
+        return true;
     }
     load(state) {
-        for (let property of this.savedProps) {
+        state = JSON.parse(state);
+        
+        for (let property in state) {
             if (property === 'players') {
-                this[property] = this.loadPlayersStates(state.players);
+                this.loadPlayersStates(state[property]);
                 continue;
             }
-            if (this[property] instanceof Array) {
-                state[property] = this.arrayDataCheck(property);
+            if (this[property] instanceof Player) {
+                this[property].load(state[property]);
+                continue;
             }
-            state[property] = this[property];
+            this[property] = state[property];
         }
-        this.prevStates.push(state);
-
-        if (this.prevStates.length > this.maxStatesSave)
-            this.prevStates.shift();
-        
-        return this.prevStates;
-    }
-    savePlayersStates() {
-        let state = {};
-
-        this.players.forEach((player, index) => state[index] = player.getState());
-
-        return state;
+        return true;
     }
     loadPlayersStates(state) {
-        return this.players.forEach((player) => player.loadState(state));
-    }
-    arrayDataCheck(property) {
-        if (this[property].length === 0)
-            return [];
-        if (this[property][0] instanceof Player) {
-            return this[property].map((player) => player.id);
-        }
-        return this[property];
+        return this.players.forEach((player, index) => player.load(state[index]));
     }
 }

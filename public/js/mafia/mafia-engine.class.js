@@ -31,33 +31,12 @@ class MafiaEngine extends GameEngine {
         courtAfterFouls: true,
     };
 
-    savedProps = [
-        'players',
-        'maxPlayers',
-        'stage',
-        'daysCount',
-        'prevStage',
-        'debate',
-        'speakers',
-        'shooting',
-        'killed',
-        'bestMove',
-        'lastWill',
-        'debaters',
-        'courtRoom',
-        'leaveThisRound',
-        'lastWillReason',
-        'prevSpeaker',
-        'activeSpeaker',
-    ];
-
     instancesPlayers = [
         'players',
-        'prevSpeaker',
         'activeSpeaker',
     ];
 
-    _courtRoomList = null;
+    #courtRoomList = null;
 
     constructor(data){
         super(data);
@@ -79,13 +58,13 @@ class MafiaEngine extends GameEngine {
         return null;
     }
     get courtRoomList(){
-        if (this._courtRoomList)
-            return this._courtRoomList;
+        if (this.#courtRoomList)
+            return this.#courtRoomList;
 
-        this._courtRoomList = this.gameTable.closest('.game').querySelector('.courtroom');
+        this.#courtRoomList = this.gameTable.closest('.game').querySelector('.courtroom');
 
-        if (this._courtRoomList)
-            return  this._courtRoomList;
+        if (this.#courtRoomList)
+            return  this.#courtRoomList;
 
         throw new Error('Element Courtroom not found in DOM tree!');
     }
@@ -110,7 +89,7 @@ class MafiaEngine extends GameEngine {
             return 'actionLastWill';
     }
     next() {
-        this.save();
+        console.log(this.save());
         this.prevStage = this.stage;
         this.stage = this.getNextStage();
 
@@ -128,7 +107,6 @@ class MafiaEngine extends GameEngine {
     resetView() {
         this.clearView();
         this.applyView();
-        console.log(this.save());
     }
     clearView() {
         this.players.forEach(player => {
@@ -233,7 +211,7 @@ class MafiaEngine extends GameEngine {
             alert('Не принято!\nЗа столом нет такого игрока.');
             return false;
         }
-        let maker = (this.timer.left === this.config.timerMax ? this.prevSpeaker : this.activeSpeaker);
+        let maker = (this.timer.left === this.config.timerMax ? this.players[this.prevSpeaker] : this.activeSpeaker);
         if (!maker) return false;
 
         if (maker.puted[this.daysCount] > 0 && maker.puted[this.daysCount] !== putedId) return false;
@@ -303,19 +281,19 @@ class MafiaEngine extends GameEngine {
         this.players.forEach((player, index) => {
             if (player.out > 0) return;
             if (index < speakerOffset)
-                shifted.push(player);
+                shifted.push(player.id);
             else
-                speakers.push(player);
+                speakers.push(player.id);
         })
         if (shifted.length > 0) {
-            shifted.forEach(player => speakers.push(player));
+            shifted.forEach(playerId => speakers.push(playerId));
         }
         return speakers;
     }
     nextSpeaker() {
         let player;
         for (; ;) {
-            player = this.speakers.shift();
+            player = this.players[this.speakers.shift()];
             if (player === this.activeSpeaker) continue;
             if (player.out > 0 && player.muted) {
                 player.unmute();
@@ -330,7 +308,7 @@ class MafiaEngine extends GameEngine {
             }
             let put = parseInt(prompt(`Игрок №${player.num} молчит, но может выставить кандидатуру: `, '0'));
             if (put > 0) {
-                this.prevSpeaker = player;
+                this.prevSpeaker = player.id;
                 this.putPlayerOnVote(put - 1);
                 player.unmute();
             };
@@ -406,7 +384,7 @@ class MafiaEngine extends GameEngine {
             let player = this.defendant;
             message += `\nНас покидает Игрок под № ${player.num}.\nУ вас прощальная минута.`;
             this.outPlayer(player.id, 2);
-            this.lastWill.push(player);
+            this.lastWill.push(player.id);
             alert(message);
             return this.dispatchNext();
         }
@@ -444,7 +422,7 @@ class MafiaEngine extends GameEngine {
         return this.dispatchNext();
     }
     daySpeaker() {
-        this.prevSpeaker = this.activeSpeaker;
+        this.prevSpeaker = this.activeSpeaker ? this.activeSpeaker.id : null;
         this.activeSpeaker = this.nextSpeaker();
     };
     actionDebate(){
