@@ -98,7 +98,7 @@ class Player {
         this.muted = false;
     }
     load(state) {
-        for (let property of this.state) {
+        for (let property in state) {
             this[property] = state[property];
         }
         return this;

@@ -69,7 +69,10 @@ class MafiaEngine extends GameEngine {
         throw new Error('Element Courtroom not found in DOM tree!');
     }
     undo() {
-        console.log('game.undo');
+        let state = this.prevStates.pop();
+        if (this.load(state)) {
+            this.resetView();
+        }
     };
     getNextStage() {
         if (this.stage === 'shootingNight'){
@@ -89,7 +92,8 @@ class MafiaEngine extends GameEngine {
             return 'actionLastWill';
     }
     next() {
-        console.log(this.save());
+        this.save();
+
         this.prevStage = this.stage;
         this.stage = this.getNextStage();
 
@@ -143,7 +147,6 @@ class MafiaEngine extends GameEngine {
                 player.row.classList.add('best-moved');
             }
             if (player.fouls > 0){
-                console.log(player.fouls);
                 for (let foul = 1; foul <= player.fouls; foul++) {
                     let foulCell = player.row.querySelector(`[data-foul="${foul}"]`);
                     if (foulCell)

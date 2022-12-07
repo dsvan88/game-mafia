@@ -41,14 +41,17 @@ class GameEngine {
     }
     load(state) {
         state = JSON.parse(state);
-        
+        console.log(state);
         for (let property in state) {
             if (property === 'players') {
                 this.loadPlayersStates(state[property]);
                 continue;
             }
-            if (this[property] instanceof Player) {
-                this[property].load(state[property]);
+            if (property === 'activeSpeaker') {
+                if (state[property])
+                    this.activeSpeaker = this.players[state[property].id];
+                else
+                    this.activeSpeaker = null;
                 continue;
             }
             this[property] = state[property];

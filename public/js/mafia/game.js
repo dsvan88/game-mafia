@@ -5,7 +5,6 @@ let Timer = new GameTimer({
     gameEngine: Mafia,
 });
 
-console.log(Timer.left);
 actionHandler.gamePutHim = function (target) {
     let playerRow = target.closest('tr');
     Mafia.putPlayer(parseInt(playerRow.dataset.playerId))
