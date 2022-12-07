@@ -13,6 +13,7 @@ class MafiaEngine extends GameEngine {
     lastWill = [];
     debaters = [];
     courtRoom = [];
+    leaveThisRound = [];
 
     reasons = ['', 'Убит', 'Осуждён', '4 Фола', 'Дисквал.'];
 
@@ -24,10 +25,37 @@ class MafiaEngine extends GameEngine {
         getOutHalfPlayers: true,
         killsPerNight: 1,
         timerMax: 6000,
-        debateTime: 3000,
         lastWillTime: 6000,
+        debateTime: 3000,
+        mutedSpeakTime: 3000,
+        courtAfterFouls: true,
     };
 
+    savedProps = [
+        'players',
+        'maxPlayers',
+        'stage',
+        'daysCount',
+        'prevStage',
+        'debate',
+        'speakers',
+        'shooting',
+        'killed',
+        'bestMove',
+        'lastWill',
+        'debaters',
+        'courtRoom',
+        'leaveThisRound',
+        'lastWillReason',
+        'prevSpeaker',
+        'activeSpeaker',
+    ];
+
+    instancesPlayers = [
+        'players',
+        'prevSpeaker',
+        'activeSpeaker',
+    ];
 
     _courtRoomList = null;
 
@@ -37,8 +65,10 @@ class MafiaEngine extends GameEngine {
     }
 
     get defendant(){
-        if (this.debaters.length > 0)
-            return this.players[this.debaters.shift()];
+        if (this.debaters.length > 0){
+            let defendant = this.debaters.shift();
+            return defendant instanceof Player ? defendant : this.players[defendant];
+        }
         return null;
     }
     get lastWiller(){
@@ -80,6 +110,7 @@ class MafiaEngine extends GameEngine {
             return 'actionLastWill';
     }
     next() {
+        this.save();
         this.prevStage = this.stage;
         this.stage = this.getNextStage();
 
@@ -97,10 +128,11 @@ class MafiaEngine extends GameEngine {
     resetView() {
         this.clearView();
         this.applyView();
+        console.log(this.save());
     }
     clearView() {
         this.players.forEach(player => {
-            player.row.classList.remove('speaker', 'shooted', 'out');
+            player.row.classList.remove('speaker', 'shooted', 'out', 'best-moved');
 
             player.putedCell.innerText = '';
             player.putedCell.classList.remove('puted');
@@ -110,6 +142,8 @@ class MafiaEngine extends GameEngine {
                 let foulCell = player.row.querySelector(`[data-foul="${foul}"]`);
                 if (foulCell)
                     foulCell.classList.remove('fail');
+                if (foul === 3)
+                    foulCell.innerText = '';
             }
         });
         this.closeCourtroom();
@@ -127,16 +161,22 @@ class MafiaEngine extends GameEngine {
             if (this.shooting.includes(player.id)){
                 player.row.classList.add('shooted');
             }
+            if (this.activeSpeaker && this.activeSpeaker.bestMove && this.bestMove.includes(player.id)){
+                player.row.classList.add('best-moved');
+            }
             if (player.fouls > 0){
                 console.log(player.fouls);
                 for (let foul = 1; foul <= player.fouls; foul++) {
                     let foulCell = player.row.querySelector(`[data-foul="${foul}"]`);
                     if (foulCell)
                         foulCell.classList.add('fail');
+                    if (foul === 3 && player.muted) {
+                        foulCell.innerText = '🤐';
+                    }
                 }
             }
         })
-        if (this.activeSpeaker){
+        if (this.activeSpeaker) {
             this.activeSpeaker.row.classList.add('speaker');
         }
         if (this.courtRoom.length > 0)
@@ -163,25 +203,16 @@ class MafiaEngine extends GameEngine {
         this.shooting.push(playerId);
         this.resetView();
     };
-    playerFouls(id, foulNum){
+    playerFouls(id, foulNum) {
         let player = this.players[id];
-        console.log(foulNum, player.fouls)
-        if (foulNum === '1' && player.fouls > 0){
-            player.fouls--;
+
+        if (player.out > 0) return false;
+
+        if (player.addFouls(foulNum) >= 4) {
+            this.outPlayer(id, player.fouls - 1);
+            this.leaveThisRound.push(id);
         }
-        else if (foulNum === '4'){
-            if (confirm(`Гравець №${player.num} (${player.name}) отримав дискваліфікуючий фол?`)){
-                player.fouls = 5
-            }
-            else {
-                player.fouls++;
-            }
-        } else {
-            player.fouls++;
-        }
-        if (player.fouls >= 4){
-            this.outPlayer(id, player.fouls-1);
-        }
+
         this.resetView();
     }
     outPlayer(id, reason) {
@@ -192,7 +223,7 @@ class MafiaEngine extends GameEngine {
             this.lastWillReason = reason;
             this.lastWill.push(id);
         }
-        else this.players[id].muted = true;
+        else this.players[id].muted = false;
 
         // save_log(`Игрок №${id+1} покидает наш город. Причина: ${this.reasons[reason]}!`);
         return true;
@@ -231,8 +262,9 @@ class MafiaEngine extends GameEngine {
             if (this.shooting.length === 1){
                 let killed = this.shooting.pop();
                 this.killed[this.daysCount].push(killed);
-                if (this.killed.length === 1 || this.checkFirstKill()){
+                if (this.checkFirstKill()){
                     this.players[killed].bestMove = true;
+                    alert(`Гравець №${this.players[killed].num} - вбит першим!\nВ нього є право залишити по собі кращій хід`);
                 }
                 return this.outPlayer(killed, 1);
             }
@@ -285,45 +317,45 @@ class MafiaEngine extends GameEngine {
         for (; ;) {
             player = this.speakers.shift();
             if (player === this.activeSpeaker) continue;
-            if (player.out > 2 && player.muted) {
-                console.log('unmute Him')
-                // Do_UnmuteHim(id);
+            if (player.out > 0 && player.muted) {
+                player.unmute();
                 continue;
             }
             if (player.out > 0) continue;
             if (!player.muted) return player;
             if (this.getActivePlayers() < 5) {
-                console.log('unmute Him')
-                // vars['timer'] = 3000;
-                // Do_UnmuteHim(i);
+                player.unmute();
+                this.timer.left = this.config.mutedSpeakTime;
                 return player;
             }
             let put = parseInt(prompt(`Игрок №${player.num} молчит, но может выставить кандидатуру: `, '0'));
             if (put > 0) {
                 this.prevSpeaker = player;
                 this.putPlayerOnVote(put - 1);
+                player.unmute();
             };
         }
     };
     actionCourt() {
         this.activeSpeaker = null;
-        // if (check_day_fouls())
-        // {
-        //     this.courtRoom.length = 0;
-        //     return this.dispatchNext();
-        // }
+        if (this.leaveThisRound.length > 0 && this.config.courtAfterFouls)
+        {
+            alert(`Сьогодні нас ${(this.leaveThisRound.length > 1 ? 'покинули гравці №' + this.courtList(this.leaveThisRound) : 'покинув гравець №' + this.players[this.leaveThisRound.pop()].num)}. Голосування не проводится.`);
+            this.courtRoom.length = 0;
+            return this.dispatchNext();
+        }
         // set_PhaseState('Зал суда.BRПросьба убрать руки от стола, прекратить жестикуляцию и агитацию.BRНа '+(d===0 ? 'голосовании' : 'перестрелке')+' находятся следующие игроки: '+vars.currentVote.join(', '));
         
         let votesAll = 0,
         playersCount = 0,
         voted = new Map(),
         maxVotes = 0,
-        message = `Уважаемые игроки, переходим в зал суда!\nНа ${(this.debate ? 'перестрелке' : 'голосовании')} находятся следующие игроки: ${this.courtList(this.courtRoom)}`,
+        message = `Уважаемые игроки, переходим в зал суда!\nНа ${(this.debate ? 'перестрелке' : 'голосовании')} находятся следующие игроки: ${this.courtList(this.courtRoom)}\n`,
         defendantCount = this.courtRoom.length;
         
         if (defendantCount === 0)
         {
-            alert(message + '\n\nНа голосование никто не выставлен. Голосование не проводится.');
+            alert(message + '\nНа голосование никто не выставлен. Голосование не проводится.');
             return this.dispatchNext();
         }
         
@@ -344,6 +376,7 @@ class MafiaEngine extends GameEngine {
         }
         votesAll = playersCount = this.getActivePlayers();
 
+        message = '';
         while(this.courtRoom.length > 0){
             let playerId = this.courtRoom.shift();
             if (votesAll < 1) {
@@ -360,7 +393,6 @@ class MafiaEngine extends GameEngine {
                     maxVotes = vote;
                 }
             }
-            
         };
         voted.forEach((votes, playerId) => {
             if (votes === maxVotes){
@@ -389,7 +421,7 @@ class MafiaEngine extends GameEngine {
             if (playersCount > 4 || this.config.getOutHalfPlayers)
             {
                 let vote = parseInt(prompt(`Кто за то, что все игроки под номерами: ${_debaters} покинули стол?'`,'0'));
-                if ( vote > playersCount/2)
+                if ( vote > playersCount/2 )
                 {
                     message=`Большинство (${vote} из ${playersCount}) - за!\nИгроки под номерами: ${_debaters} покидают стол.`;
                     while(this.debaters.length > 0)
@@ -421,8 +453,7 @@ class MafiaEngine extends GameEngine {
     };
     actionLastWill(){
         this.timer.left = this.config.lastWillTime;
-        let willer = this.lastWiller
-        this.activeSpeaker = willer;
+        this.activeSpeaker = this.lastWiller;
     };
     actionBestMove(playerId){
 
@@ -456,7 +487,7 @@ class MafiaEngine extends GameEngine {
         this.courtRoomList.innerText = '';
     }
     checkFirstKill(){
-        let check = killed.filter((killed) => killed.length > 0);
-        return check.length === 1;
+        let check = this.killed.reduce((killedCount, killedAtDay) => killedCount + killedAtDay.length, 0);
+        return check === 1;
     }
 }

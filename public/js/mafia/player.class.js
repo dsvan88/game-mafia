@@ -1,5 +1,6 @@
 class Player {
     id = '0';
+    num = 0;
     name = 'Player';
     fouls = 0;
     prim = ''
@@ -8,13 +9,26 @@ class Player {
 
     muted = false;
     out = false;
+    bestMove = false;
 
     puted = {};
 
-    num = null;
     row = null;
     putedCell = null
     primCell = null;
+
+    savedProps = [
+        'id',
+        'num',
+        'name',
+        'fouls',
+        'prim',
+        'dops',
+        'muted',
+        'out',
+        'bestMove',
+        'puted',
+    ];
 
     constructor(playerData = null) {
         if (playerData) {
@@ -28,11 +42,11 @@ class Player {
         this.row = document.createElement('tr');
         this.row.dataset.playerId = index;
 
+        this.num = index + 1;
         let num = document.createElement('td');
-        num.innerText = index + 1;
+        num.innerText = this.num;
         num.dataset.actionDblclick = 'game-put-him';
         this.row.append(num);
-        this.num = index + 1;
 
         let nick = document.createElement('td');
         nick.innerText = this.name+index;
@@ -67,5 +81,36 @@ class Player {
 
             this.dops += points;
         }
+    }
+    addFouls(foulNum) {
+        if (foulNum === '1' && this.fouls > 0){
+            this.fouls--;
+        }
+        else if (foulNum === '4'){
+            this.fouls = confirm(`Гравець №${this.num} (${this.name}) отримав дискваліфікуючий фол?`) ? 5 : this.fouls + 1;
+        }
+        else {
+            this.fouls++;
+        }
+        if (this.fouls === 3) {
+            this.muted = true;
+        }
+        return this.fouls;
+    }
+    unmute() {
+        this.muted = false;
+    }
+    getState() {
+        let state = {};
+        for (let property of this.savedProps) {
+            state[property] = this[property];
+        }
+        return state;
+    }
+    loadState(state) {
+        for (let property of this.state[this.id]) {
+            this[property] = state[property];
+        }
+        return this;
     }
 }
