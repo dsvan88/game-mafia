@@ -41,7 +41,6 @@ class GameEngine {
     }
     load(state) {
         state = JSON.parse(state);
-        console.log(state);
         for (let property in state) {
             if (property === 'players') {
                 this.loadPlayersStates(state[property]);

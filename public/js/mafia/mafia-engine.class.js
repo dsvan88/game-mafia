@@ -47,7 +47,7 @@ class MafiaEngine extends GameEngine {
         }
         return null;
     }
-    get lastWiller(){
+    get lastWiller() {
         if (this.lastWill.length > 0){
             let willer = this.lastWill.shift();
             return willer instanceof Player ? willer : this.players[willer];
@@ -277,14 +277,13 @@ class MafiaEngine extends GameEngine {
 
         this.next();
     }
-    getActivePlayers(role) {
-        let count = 0;
-        this.players.forEach(player => {
+    getActivePlayersCount(role) {
+        let count = this.players.reduce((playersCount, player) => {
             if (player.out > 0) return;
             if (role === 2 && (player.role === 0 || player.role === 4)) return; // Если ищем мафов - отсекаем миров
             if (role === 1 && (player.role === 1 || player.role === 2)) return; // Если ищем миров - отсекаем мафов
-            ++count;
-        })
+            return ++playersCount;
+        }, 0)
         return count;
     }
     getSpeakers() {
@@ -315,7 +314,7 @@ class MafiaEngine extends GameEngine {
             }
             if (player.out > 0) continue;
             if (!player.muted) return player;
-            if (this.getActivePlayers() < 5) {
+            if (this.getActivePlayersCount() < 5) {
                 player.unmute();
                 this.timer.left = this.config.mutedSpeakTime;
                 return player;
@@ -374,7 +373,7 @@ class MafiaEngine extends GameEngine {
             this.log(message);
             return this.dispatchNext();
         }
-        votesAll = playersCount = this.getActivePlayers();
+        votesAll = playersCount = this.getActivePlayersCount();
 
         message = '';
         while(this.courtRoom.length > 0){
@@ -406,7 +405,6 @@ class MafiaEngine extends GameEngine {
             let player = this.defendant;
             message += `\nНас покидает Игрок под № ${player.num}.\nУ вас прощальная минута.`;
             this.outPlayer(player.id, 2);
-            this.lastWill.push(player.id);
             alert(message);
             this.log(message);
             return this.dispatchNext();
