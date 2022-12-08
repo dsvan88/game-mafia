@@ -73,6 +73,9 @@ class MafiaEngine extends GameEngine {
         let descrBlock = this.gameTable.closest('.game').querySelector('.game__stage');
         descrBlock.innerHTML = descr.replace(/\n/g, '<br>');
     }
+    get stageDescr(){
+        return this._stageDescr;
+    }
     undo() {
         let state = this.prevStates.pop();
         if (this.load(state)) {
@@ -81,6 +84,9 @@ class MafiaEngine extends GameEngine {
         }
     };
     getNextStage() {
+
+        if (this.theEnd() && this.stage === 'finish')
+            return 'finish';
         if (this.stage === 'shootingNight'){
             this.shootingCheck();
         }
@@ -507,5 +513,31 @@ class MafiaEngine extends GameEngine {
         <div class="game__log-events">${message}</div>
     </div>`
         );
+    };
+    finish(){
+        alert(this.stageDescr.replace(/BR/g,'\n'));
+    }
+    theEnd(winner){
+        let message = '',
+            red = this.getActivePlayersCount(1),
+            mafs = this.getActivePlayersCount(2);
+        
+        if (mafs===0 || winner === 1)
+        {
+            this.winners = 1;
+            message = 'Мирне місто!\nВід тепер, Ваші діти можуть спати спокійно!';
+        }
+        else if (mafs >= red || winner === 2)
+        {
+            this.winners = 2;
+            message = "Мафію!\nВід тепер, Ваші діти можуть спати сито й спокійно!";
+        }
+        if (this.winners)
+        {
+            this.stageDescr = `Вітаємо з перемогою: ${message}`;
+            this.stage = 'finish';
+            return true;
+        }
+        return false;
     }
 }
